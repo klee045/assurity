@@ -1,6 +1,6 @@
 export interface AzureOAuthResponse {
   token_type: string;
-  expires_in: string;
-  ext_expires_in: string;
+  expires_in: number;
+  ext_expires_in: number;
   access_token: string;
 }

@@ -1,5 +1,5 @@
-import "dotenv/config";
 import axios, { AxiosResponse } from "axios";
+import "dotenv/config";
 import { AzureOAuthResponse } from "../models/auth.model";
 
 /**
@@ -13,7 +13,11 @@ import { AzureOAuthResponse } from "../models/auth.model";
  * @returns {Promise<string | undefined>} accessToken - Access Token from Microsoft to call Microsoft Graph API
  */
 export const getAzureAccessToken: () => Promise<
-  string | undefined
+  | {
+      accessToken: string;
+      expiresAt: number;
+    }
+  | undefined
 > = async () => {
   try {
     const tenantId: string = process.env.TENANT_ID || "";
@@ -44,11 +48,16 @@ export const getAzureAccessToken: () => Promise<
     process.env.AZURE_ACCESS_TOKEN = accessToken;
     console.log("env token", process.env.AZURE_ACCESS_TOKEN);
 
-    return accessToken;
+    const expiresIn: number = response.data.expires_in;
+    const expiresAt: number = Date.now() + expiresIn * 1000;
+    process.env.AZURE_ACCESS_TOKEN_EXPIRES_AT = expiresAt.toString();
+
+    return { accessToken: accessToken, expiresAt: expiresAt };
   } catch (error: any) {
     console.error(
-      "Error fetching access token:",
+      "Error retrieving access token:",
       error.response ? error.response.data : error.message
     );
+    throw new Error("Error retrieving access token");
   }
 };
