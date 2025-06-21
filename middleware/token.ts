@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { getAzureAccessToken } from "../controllers/auth.controller";
+import { getAzureAccessToken } from "../controllers/auth";
 
 /**
  * Middleware to check expiry of access token
@@ -14,7 +14,6 @@ export const checkAzureAccessToken = async (
   next: NextFunction
 ) => {
   try {
-    console.log("@@@@@@@@@@@@@@@ checking");
     const currentTime = Date.now();
     const expiresAt = parseInt(
       process.env.AZURE_ACCESS_TOKEN_EXPIRES_AT || "0",
@@ -23,7 +22,7 @@ export const checkAzureAccessToken = async (
 
     // get new token if current is expired
     if (currentTime >= expiresAt || !process.env.AZURE_ACCESS_TOKEN) {
-      console.log("Token expired or doesn't exist. Refreshing...");
+      console.log("Token expired or does not exist. Requesting new token...");
       const tokenResponse = await getAzureAccessToken();
 
       // update env variables storing access token and expiry
