@@ -1,6 +1,6 @@
 import axios, { AxiosResponse } from "axios";
 import "dotenv/config";
-import { AzureOAuthResponse } from "../models/auth.model";
+import { AzureOAuthResponse } from "../models/auth";
 
 /**
  * Step 3 in https://learn.microsoft.com/en-us/graph/auth-v2-service

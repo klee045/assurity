@@ -1,5 +1,5 @@
 import { app } from "./app";
-import { getAzureAccessToken } from "./controllers/auth.controller";
+import { getAzureAccessToken } from "./controllers/auth";
 
 const port = process.env.PORT;
 
