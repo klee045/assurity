@@ -1,4 +1,5 @@
 import { msGraphClient, pinoLogger } from "../app";
+import { ERROR_MESSAGE } from "../constants/error";
 import { GetGroupResponse, Group } from "../models/group.model";
 
 /**
@@ -20,6 +21,13 @@ export const getSecurityGroups: () => Promise<
     return groups.value;
   } catch (err: any) {
     pinoLogger.logger.debug({ err }, "Error getting security groups");
+
+    if (err.statusCode === 401) {
+      throw new Error(ERROR_MESSAGE.UNAUTHORIZED);
+    } else if (err.statusCode === 403) {
+      throw new Error(ERROR_MESSAGE.FORBIDDEN);
+    }
+
     throw new Error("Error getting security groups");
   }
 };
