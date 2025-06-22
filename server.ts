@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import { app } from "./app";
-import { getAzureAccessToken } from "./controllers/auth";
 import { mongoDb } from "./db/mongo";
+import { getAzureAccessToken } from "./middleware/token";
 
 const port = process.env.PORT;
 
