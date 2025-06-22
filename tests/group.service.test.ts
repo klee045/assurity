@@ -8,6 +8,13 @@ jest.mock("../app", () => ({
     filter: jest.fn().mockReturnThis(),
     get: jest.fn(),
   },
+  pinoLogger: {
+    logger: {
+      debug: jest.fn(),
+      info: jest.fn(),
+      error: jest.fn(),
+    },
+  },
 }));
 
 // TODO: figure out how to mock the mongoose Model method calls to test the other service functions
