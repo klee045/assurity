@@ -1,4 +1,4 @@
-import { msGraphClient } from "../app";
+import { msGraphClient, pinoLogger } from "../app";
 import { GetGroupResponse, Group } from "../models/group.model";
 
 /**
@@ -14,8 +14,12 @@ export const getSecurityGroups: () => Promise<
       .filter("mailEnabled eq false&securityEnabled eq true") // filter for security groups
       .get();
 
+    pinoLogger.logger.debug(
+      `Security Groups retrieved: ${JSON.stringify(groups.value)}`
+    );
     return groups.value;
   } catch (err: any) {
+    pinoLogger.logger.debug({ err }, "Error getting security groups");
     throw new Error("Error getting security groups");
   }
 };
@@ -52,8 +56,10 @@ export const createIfNotExistSecurityGroups: ({
       }
     }
 
+    pinoLogger.logger.debug("Groups have been created");
     return createdGroups;
   } catch (err: any) {
+    pinoLogger.logger.debug({ err }, "Error creating security groups");
     throw new Error("Error creating security groups");
   }
 };
@@ -84,8 +90,10 @@ export const upsertSecurityGroups: ({
       };
       await Group.updateOne(query, update, options);
     }
+    pinoLogger.logger.debug("Groups have been updated/created");
   } catch (err: any) {
-    throw new Error("Error creating security groups");
+    pinoLogger.logger.debug({ err }, "Error upserting security groups");
+    throw new Error("Error upserting security groups");
   }
 };
 
@@ -105,6 +113,7 @@ export const syncSecurityGroups: () => void = async () => {
       await upsertSecurityGroups({ securityGroups: securityGroups });
     }
   } catch (err: any) {
+    pinoLogger.logger.debug({ err }, "Error syncing security groups");
     throw new Error("Error syncing security groups");
   }
 };

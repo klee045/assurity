@@ -2,6 +2,7 @@ import axios, { AxiosResponse } from "axios";
 import "dotenv/config";
 import { NextFunction, Request, Response } from "express";
 import { AzureOAuthResponse } from "../models/token.model";
+import { pinoLogger } from "../app";
 
 /**
  * Step 3 in https://learn.microsoft.com/en-us/graph/auth-v2-service
@@ -43,22 +44,19 @@ export const getAzureAccessToken: () => Promise<
       }
     );
     const accessToken: string = response.data.access_token;
-    console.log("access token obtained", accessToken);
+    pinoLogger.logger.debug(`accessToken from response: ${accessToken}`);
 
     // Temporarily store in env, ideally to be stored in an equivalent of AWS Secrets Manager
     process.env.AZURE_ACCESS_TOKEN = accessToken;
-    console.log("env token", process.env.AZURE_ACCESS_TOKEN);
 
     const expiresIn: number = response.data.expires_in;
     const expiresAt: number = Date.now() + expiresIn * 1000;
     process.env.AZURE_ACCESS_TOKEN_EXPIRES_AT = expiresAt.toString();
+    pinoLogger.logger.debug(`accessToken expiresAt: ${expiresAt.toString()}`);
 
     return { accessToken: accessToken, expiresAt: expiresAt };
-  } catch (error: any) {
-    console.error(
-      "Error retrieving access token:",
-      error.response ? error.response.data : error.message
-    );
+  } catch (err: any) {
+    pinoLogger.logger.debug({ err }, "Error retrieving access token");
     throw new Error("Error retrieving access token");
   }
 };
@@ -84,7 +82,6 @@ export const checkAzureAccessToken = async (
 
     // get new token if current is expired
     if (currentTime >= expiresAt || !process.env.AZURE_ACCESS_TOKEN) {
-      console.log("Token expired or does not exist. Requesting new token...");
       const tokenResponse = await getAzureAccessToken();
 
       // update env variables storing access token and expiry
@@ -99,8 +96,11 @@ export const checkAzureAccessToken = async (
     }
 
     next();
-  } catch (error) {
-    console.error("Error obtaining new access token", error);
+  } catch (err: any) {
+    pinoLogger.logger.debug(
+      { err },
+      "Error checking and/or obtaining new access token"
+    );
     res.status(500).json({ message: "Internal server error." });
   }
 };

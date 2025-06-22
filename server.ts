@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { app } from "./app";
+import { app, pinoLogger } from "./app";
 import { mongoDb } from "./db/mongo";
 import { getAzureAccessToken } from "./middleware/token";
 
@@ -10,11 +10,11 @@ app.listen(port, () => {
 
   mongoDb
     .then((db: mongoose.Mongoose) => {
-      console.log(`MongoDB connected. Version: ${db.version}`);
+      pinoLogger.logger.info(`MongoDB connected. Version: ${db.version}`);
     })
     .catch((err: any) => {
-      console.log("Error connecting to MongoDB:", err);
+      pinoLogger.logger.error(`Error connecting to MongoDB: ${err}`);
     });
 
-  console.log(`Example app listening on port ${port}`);
+  pinoLogger.logger.info(`App listening on port ${port}`);
 });

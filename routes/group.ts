@@ -1,4 +1,4 @@
-import express, { Request, Response } from "express";
+import express from "express";
 import { syncSecurityGroups } from "../controllers/group.controller";
 
 const groupRouter = express.Router();
