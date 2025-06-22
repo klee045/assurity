@@ -16,7 +16,6 @@ export const getSecurityGroups: () => Promise<
 
     return groups.value;
   } catch (err: any) {
-    // console.error("error", err);
     throw new Error("Error getting security groups");
   }
 };
@@ -53,10 +52,8 @@ export const createIfNotExistSecurityGroups: ({
       }
     }
 
-    console.log("Groups saved to MongoDB");
     return createdGroups;
   } catch (err: any) {
-    console.error("Error creating security group", err);
     throw new Error("Error creating security groups");
   }
 };
@@ -87,10 +84,7 @@ export const upsertSecurityGroups: ({
       };
       await Group.updateOne(query, update, options);
     }
-
-    console.log("Security Groups upserted to MongoDB");
   } catch (err: any) {
-    console.error("Error creating security group", err);
     throw new Error("Error creating security groups");
   }
 };
@@ -111,7 +105,6 @@ export const syncSecurityGroups: () => void = async () => {
       await upsertSecurityGroups({ securityGroups: securityGroups });
     }
   } catch (err: any) {
-    console.error("error", err);
     throw new Error("Error syncing security groups");
   }
 };
