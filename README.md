@@ -29,7 +29,7 @@ Additionally, you'll need the following credentials from [Azure](https://learn.m
 
 ---
 
-## App Usage Setup Instructions
+## Docker Setup Instructions
 
 ### Step 1: Clone the Repository
 
@@ -49,7 +49,7 @@ docker build -t <name:tag> .
 ```
 ...
 assurity:
-    image: <name:tag>
+    image: <name>:<tag>
 ...
 ```
 
@@ -75,6 +75,21 @@ docker compose -f docker-compose.yml run -d
 ```
 
 ---
+
+### Step 6: If running just the app's Docker container
+
+```bash
+docker run \
+-p <HOST_PORT>:<CONTAINER_PORT> \
+-e TENANT_ID=<tenant_id> \
+-e CLIENT_ID=<client_id> \
+-e CLIENT_SECRET=<client_secret> \
+-e MONGODB_CONNECTION_STRING=<mongodb_cn_str> \
+--name <name_of_container> \
+-d <name>:tag>
+```
+
+Do ensure that you have MongoDB running either on cloud or on-premise and its connection string can be provided above.
 
 ## Development Setup Instructions
 
@@ -117,6 +132,8 @@ npm test
 
   - unable to use a redirect endpoint for admin users to grant consent as part of the flow as this assumes there is an interface available to do redirects and callbacks
   - if there is an interface available, it will then mean there will be users involved and so it will no longer be just a daemon app and the [OAuth 2.0 code grant](https://learn.microsoft.com/en-us/entra/identity-platform/v2-oauth2-auth-code-flow) should be used instead
+
+- It might also be possible that retrieval of Security Group information might be a cron job of some sort, which also indicates that the app will be headless with no interface.
 
 - The current method of storing secrets and IDs in `.env` is definitely not ideal and secure but this direction was chosen to cut down on overhead trying to find a suitable self-hostable solution
   - with time, other more secure storage options should be explored: `AWS Secrets Manager`, `Azure Key Vault`
