@@ -68,15 +68,17 @@ assurity:
         CLIENT_SECRET: <client_secret>
 ```
 
-### Step 5: Run docker-compose.yml
+### Step 5: Docker run or Docker compose
+
+#### Run docker-compose.yml
 
 ```bash
 docker compose -f docker-compose.yml run -d
 ```
 
----
+#### OR
 
-### Step 6: If running just the app's Docker container
+#### If running just the app's Docker container
 
 ```bash
 docker run \
