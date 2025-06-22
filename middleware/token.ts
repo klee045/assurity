@@ -22,6 +22,7 @@ export const getAzureAccessToken: () => Promise<
   | undefined
 > = async () => {
   try {
+    // TODO: move to better key/secret store like an equivalent of AWS Secrets Manager
     const tenantId: string = process.env.TENANT_ID || "";
     const clientId: string = process.env.CLIENT_ID || "";
     const clientSecret: string = process.env.CLIENT_SECRET || "";
