@@ -82,8 +82,6 @@ export const upsertSecurityGroups: ({
   securityGroups: Group[];
 }) => void = async ({ securityGroups }) => {
   try {
-    const options = { upsert: true };
-
     const securityGroupUpdates: {
       updateOne: {
         filter: {
