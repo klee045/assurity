@@ -84,13 +84,23 @@ export const upsertSecurityGroups: ({
   try {
     const options = { upsert: true };
 
-    for (let group of securityGroups) {
-      const query = { id: group.id };
-      const update = {
-        ...group,
+    const securityGroupUpdates: {
+      updateOne: {
+        filter: {
+          id: string;
+        };
+        update: Group;
+        upsert: boolean;
       };
-      await Group.updateOne(query, update, options);
-    }
+    }[] = securityGroups.map((securityGroup: Group) => ({
+      updateOne: {
+        filter: { id: securityGroup.id },
+        update: securityGroup,
+        upsert: true,
+      },
+    }));
+
+    await Group.bulkWrite(securityGroupUpdates);
     pinoLogger.logger.debug("Groups have been updated/created");
   } catch (err: any) {
     pinoLogger.logger.debug({ err }, "Error upserting security groups");
