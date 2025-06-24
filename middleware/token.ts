@@ -1,63 +1,76 @@
-import axios, { AxiosResponse } from "axios";
+import msal from "@azure/msal-node";
 import "dotenv/config";
 import { NextFunction, Request, Response } from "express";
-import { AzureOAuthResponse } from "../models/token.model";
 import { pinoLogger } from "../app";
+import { MsalCcaTokenRequest, MsalConfig } from "../models/token.model";
+
+/**
+ * Configuration object to be passed to MSAL instance on creation.
+ */
+const msalConfig: MsalConfig = {
+  auth: {
+    clientId: process.env.CLIENT_ID || "",
+    authority:
+      process.env.AAD_ENDPOINT ||
+      "https://login.microsoftonline.com" + "/" + process.env.TENANT_ID,
+    clientSecret: process.env.CLIENT_SECRET || "",
+  },
+};
+
+/**
+ * With client credentials flows permissions need to be granted in the portal by a tenant administrator.
+ * The scope is always in the format '<resource>/.default'.
+ */
+const tokenRequest: MsalCcaTokenRequest = {
+  scopes: [
+    process.env.GRAPH_ENDPOINT || "https://graph.microsoft.com" + "/.default",
+  ],
+};
+
+/**
+ * Initialize a confidential client application.
+ */
+const cca = new msal.ConfidentialClientApplication(msalConfig);
 
 /**
  * Step 3 in https://learn.microsoft.com/en-us/graph/auth-v2-service
  * Obtain Microsoft access token to make API calls to Microsoft Graph API
+ * using authentication logic in https://learn.microsoft.com/en-us/entra/identity-platform/tutorial-v2-nodejs-console
  *
  * Ensure that first 2 steps have been completed
  * 1. Permissions have been configured
  * 2. Administrator Consent has been given.
  *
- * @returns {Promise<string | undefined>} accessToken - Access Token from Microsoft to call Microsoft Graph API
+ * @returns accessToken - Access Token from Microsoft to call Microsoft Graph API
  */
-export const getAzureAccessToken: () => Promise<
-  | {
-      accessToken: string;
-      expiresAt: number;
-    }
-  | undefined
-> = async () => {
+export const getAzureAccessToken: () => Promise<{
+  accessToken: string;
+  expiresAt: Date;
+}> = async () => {
   try {
-    // TODO: move to better key/secret store like an equivalent of AWS Secrets Manager
-    const tenantId: string = process.env.TENANT_ID || "";
-    const clientId: string = process.env.CLIENT_ID || "";
-    const clientSecret: string = process.env.CLIENT_SECRET || "";
-    const oauthUrl: string = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`;
-    const params: URLSearchParams = new URLSearchParams({
-      grant_type: "client_credentials",
-      client_id: clientId,
-      client_secret: clientSecret,
-      scope: "https://graph.microsoft.com/.default",
-    });
+    // get auth response using a confidential client application and obtain access token
+    const authResponse: msal.AuthenticationResult | null =
+      await cca.acquireTokenByClientCredential(tokenRequest);
 
-    // Obtain access token
-    const response: AxiosResponse<AzureOAuthResponse> = await axios.post(
-      oauthUrl,
-      params.toString(),
-      {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-      }
-    );
-    const accessToken: string = response.data.access_token;
-    pinoLogger.logger.debug(`accessToken from response: ${accessToken}`);
+    if (!authResponse) {
+      throw new Error("Authentication failed");
+    }
+    pinoLogger.logger.debug("authResponse from msal", authResponse);
 
-    // Temporarily store in env, ideally to be stored in an equivalent of AWS Secrets Manager
-    process.env.AZURE_ACCESS_TOKEN = accessToken;
+    // if expiresOn is null, set it to now
+    const expiresAt: Date = authResponse.expiresOn
+      ? new Date(authResponse.expiresOn)
+      : new Date();
 
-    const expiresIn: number = response.data.expires_in;
-    const expiresAt: number = Date.now() + expiresIn * 1000;
+    process.env.AZURE_ACCESS_TOKEN = authResponse.accessToken;
     process.env.AZURE_ACCESS_TOKEN_EXPIRES_AT = expiresAt.toString();
-    pinoLogger.logger.debug(`accessToken expiresAt: ${expiresAt.toString()}`);
 
-    return { accessToken: accessToken, expiresAt: expiresAt };
+    return {
+      accessToken: authResponse.accessToken,
+      expiresAt: expiresAt,
+    };
   } catch (err: any) {
-    pinoLogger.logger.debug({ err }, "Error retrieving access token");
+    pinoLogger.logger.info({ err }, "Error retrieving access token");
     throw new Error("Error retrieving access token");
   }
 };
@@ -75,15 +88,18 @@ export const checkAzureAccessToken = async (
   next: NextFunction
 ) => {
   try {
-    const currentTime = Date.now();
-    const expiresAt = parseInt(
+    const currentTime: number = Date.now();
+    const expiresAt: number = parseInt(
       process.env.AZURE_ACCESS_TOKEN_EXPIRES_AT || "0",
       10
     );
 
     // get new token if current is expired
     if (currentTime >= expiresAt || !process.env.AZURE_ACCESS_TOKEN) {
-      const tokenResponse = await getAzureAccessToken();
+      const tokenResponse: {
+        accessToken: string;
+        expiresAt: Date;
+      } = await getAzureAccessToken();
 
       // update env variables storing access token and expiry
       if (tokenResponse) {

@@ -1,4 +1,6 @@
+import { ClientSecretCredential } from "@azure/identity";
 import { Client } from "@microsoft/microsoft-graph-client";
+import { TokenCredentialAuthenticationProvider } from "@microsoft/microsoft-graph-client/authProviders/azureTokenCredentials";
 import "dotenv/config";
 import express, { Request, Response } from "express";
 import { randomUUID } from "node:crypto";
@@ -8,11 +10,25 @@ import { errorHandler } from "./error/error";
 import { checkAzureAccessToken } from "./middleware/token";
 import groupRouter from "./routes/group";
 
+// @azure/identity
+const credential = new ClientSecretCredential(
+  process.env.TENANT_ID || "YOUR_TENANT_ID",
+  process.env.CLIENT_ID || "YOUR_CLIENT_ID",
+  process.env.CLIENT_SECRET || "YOUR_CLIENT_SECRET"
+);
+
+// @microsoft/microsoft-graph-client/authProviders/azureTokenCredentials
+const authProvider = new TokenCredentialAuthenticationProvider(credential, {
+  // The client credentials flow requires that you request the
+  // /.default scope, and pre-configure your permissions on the
+  // app registration in Azure. An administrator must grant consent
+  // to those permissions beforehand.
+  scopes: ["https://graph.microsoft.com/.default"],
+});
+
 export const app = express();
-export const msGraphClient = Client.init({
-  authProvider: (done) => {
-    done(null, process.env.AZURE_ACCESS_TOKEN || "");
-  },
+export const msGraphClient = Client.initWithMiddleware({
+  authProvider: authProvider,
 });
 export const pinoLogger = logger({
   // Reuse an existing logger instance
