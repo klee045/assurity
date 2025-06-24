@@ -53,10 +53,7 @@ export const createIfNotExistSecurityGroups: ({
       const existingGroup = await Group.findOne({ id: group.id });
       if (!existingGroup) {
         const newGroup = new Group({
-          id: group.id,
-          displayName: group.displayName,
-          mailEnabled: group.mailEnabled,
-          securityEnabled: group.securityEnabled,
+          ...group,
         });
         await newGroup.save();
 
@@ -90,11 +87,7 @@ export const upsertSecurityGroups: ({
     for (let group of securityGroups) {
       const query = { id: group.id };
       const update = {
-        displayName: group.displayName,
-        description: group.description,
-        mailEnabled: group.mailEnabled,
-        securityEnabled: group.securityEnabled,
-        createdDateTime: group.createdDateTime,
+        ...group,
       };
       await Group.updateOne(query, update, options);
     }
