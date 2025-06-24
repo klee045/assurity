@@ -1,6 +1,11 @@
-export interface AzureOAuthResponse {
-  token_type: string;
-  expires_in: number;
-  ext_expires_in: number;
-  access_token: string;
+export interface MsalConfig {
+  auth: {
+    clientId: string;
+    authority: string;
+    clientSecret: string;
+  };
+}
+
+export interface MsalCcaTokenRequest {
+  scopes: string[];
 }
